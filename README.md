@@ -8,13 +8,18 @@
 [![GitHub issues](https://img.shields.io/github/issues/checle/checle-js-boilerplate.svg?style=flat-square)](https://github.com/checle/checle-js-boilerplate/issues)
 [![Tonic test](https://img.shields.io/badge/npm-test-brightgreen.svg?style=flat-square)](https://tonicdev.com/npm/checle-js-boilerplate)
 
+## Configuration
+
+Replace the string `checle-js-boilerplate` in all files of the
+repository with the name of your project. Delete this passage.
+
 ## Installation
 
-Install the package using the NPM toolchain:
+Install this package using NPM:
 
     npm install checle-js-boilerplate
 
-Record for JS offers a `checle-js-boilerplate` command-line interface. To make it available on your machine, install `checle-js-boilerplate` globally:
+This project comes with a `checle-js-boilerplate` command-line interface. To make it available on your machine, install `checle-js-boilerplate` globally:
 
     sudo npm install checle-js-boilerplate -g
 

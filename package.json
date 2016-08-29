@@ -1,7 +1,7 @@
 {
   "name": "checle-js-boilerplate",
   "version": "0.0.2",
-  "description": "Boilerplate for a TypeScript project complying with organizational standards",
+  "description": "Boilerplate for a TypeScript project compliant with organizational standards",
   "main": "build/index.js",
   "scripts": {
     "prepublish": "npm run clean && typings install && npm run build",
