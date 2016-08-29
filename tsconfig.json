@@ -3,6 +3,7 @@
         "module": "commonjs",
         "moduleResolution": "node",
         "target": "es6",
+        "declaration": true,
         "experimentalDecorators": true,
         "noImplicitAny": false,
         "sourceMap": false,
@@ -14,6 +15,7 @@
     ],
     "exclude": [
         "node_modules",
-        "test"
+        "test",
+        "build"
     ]
 }

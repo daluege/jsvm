@@ -1,10 +1,10 @@
 {
   "name": "checle-js-boilerplate",
-  "version": "0.0.2",
-  "description": "Boilerplate for a TypeScript project compliant with organizational standards",
+  "version": "0.0.3",
+  "description": "Boilerplate for a TypeScript project complying with organizational standards",
   "main": "build/index.js",
   "scripts": {
-    "prepublish": "npm run clean && typings install && npm run build",
+    "prepublish": "npm run clean && typings install && npm run build && cp -Rn src/* build/",
     "postpublish": "npm run deploy",
     "test": "npm run dist && node test/index.js && ts-node test/index.js && bash test/index.sh && npm run lint",
     "lint": "find src -name '*.ts' -print0 | xargs -0 -n1 eslint",
@@ -16,6 +16,7 @@
   "bin": {
     "checle-js-boilerplate": "bin/index.js"
   },
+  "typings": "build/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/checle/checle-js-boilerplate.git"
