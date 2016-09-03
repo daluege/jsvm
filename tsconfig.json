@@ -2,13 +2,12 @@
     "compilerOptions": {
         "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es6",
+        "target": "es5",
         "declaration": true,
         "experimentalDecorators": true,
         "noImplicitAny": false,
         "sourceMap": false,
-        "outDir": "build",
-        "rootDir": "src"
+        "outDir": "build"
     },
     "filesGlob": [
         "**/*.ts"
