@@ -6,7 +6,7 @@
   "scripts": {
     "prepublish": "npm run clean && typings install && npm run build && cp -Rn src/* build/",
     "postpublish": "npm run deploy",
-    "test": "npm run dist && node test/index.js && ts-node test/index.js && bash test/index.sh && npm run lint",
+    "test": "npm run dist && node --harmony test/index.js && ts-node test/index.ts && bash test/index.sh && npm run lint",
     "lint": "find src -name '*.ts' -print0 | xargs -0 -n1 eslint",
     "build": "tsc",
     "dist": "npm run build && webpack --optimize-minimize build/index.js dist/index.js",
