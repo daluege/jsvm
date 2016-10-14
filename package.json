@@ -2,21 +2,22 @@
   "name": "checle-js-boilerplate",
   "version": "0.0.3",
   "description": "Boilerplate for a TypeScript project complying with organizational standards",
-  "main": "build/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "prepublish": "npm run clean && typings install && npm run build && cp -Rn src/* build/",
+    "prepublish": "npm run clean && typings install && npm run build",
     "postpublish": "npm run deploy",
-    "test": "npm run dist && node --harmony test/index.js && ts-node test/index.ts && bash test/index.sh && npm run lint",
-    "lint": "find src -name '*.ts' -print0 | xargs -0 -n1 eslint",
+    "test": "ts-node node_modules/tape/bin/tape src/**/test/*.ts src/**/test.ts",
+    "lint": "tslint src/**/*.ts",
     "build": "tsc",
-    "dist": "npm run build && webpack --optimize-minimize build/index.js dist/index.js",
-    "clean": "rm -rf build && rm -rf dist",
-    "deploy": "npm run dist && gh-pages -d dist -m \"Deploy $(npm view checle-js-boilerplate version)\""
+    "dist": "npm run build && webpack --optimize-minimize dist/index.js dist/browser.js",
+    "clean": "rm -rf dist",
+    "deploy": "npm run dist && gh-pages -d dist -m \"Deploy $(npm view checle-js-boilerplate version)\"",
+    "debug": "devtool test/index.js"
   },
   "bin": {
     "checle-js-boilerplate": "bin/index.js"
   },
-  "typings": "build/index.d.ts",
+  "typings": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/checle/checle-js-boilerplate.git"
@@ -26,18 +27,15 @@
   "bugs": {
     "url": "https://github.com/checle/checle-js-boilerplate/issues"
   },
-  "homepage": "https://github.com/checle/checle-js-boilerplate#readme",
+  "homepage": "https://github.com/checle/checle-js-boilerplate",
   "devDependencies": {
     "devtool": "^2.0.3",
-    "eslint": "^3.3.1",
-    "eslint-config-standard": "^5.3.5",
-    "eslint-plugin-promise": "^2.0.1",
-    "eslint-plugin-standard": "^2.0.0",
     "gh-pages": "^0.11.0",
     "tape": "^4.6.0",
     "ts-node": "^1.3.0",
+    "tslint": "^3.15.1",
+    "tslint-config-standard": "^1.5.0",
     "typescript": "^1.8.10",
-    "typescript-eslint-parser": "^0.1.2",
     "typings": "^1.3.2",
     "webpack": "^1.13.1"
   }
