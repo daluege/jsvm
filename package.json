@@ -1,7 +1,7 @@
 {
   "name": "checle-js-boilerplate",
-  "version": "0.0.3",
-  "description": "Boilerplate for a TypeScript project complying with organizational standards",
+  "version": "0.0.1",
+  "description": "",
   "main": "dist/index.js",
   "scripts": {
     "prepublish": "npm run clean && typings install && npm run build",
@@ -11,7 +11,7 @@
     "build": "tsc",
     "dist": "npm run build && webpack --optimize-minimize dist/index.js dist/browser.js",
     "clean": "rm -rf dist",
-    "deploy": "npm run dist && gh-pages -d dist -m \"Deploy $(npm view checle-js-boilerplate version)\"",
+    "deploy": "npm run dist && gh-pages -d dist -m \"Deploy $(npm view checle-js-boilerplate version)\" || true",
     "debug": "devtool test/index.js"
   },
   "bin": {

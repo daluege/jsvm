@@ -6,7 +6,6 @@
 [![Dependencies](https://img.shields.io/david/checle/checle-js-boilerplate.svg?maxAge=2592000&style=flat-square)](https://david-dm.org/checle/checle-js-boilerplate)
 [![Build status](https://img.shields.io/travis/checle/checle-js-boilerplate/master.svg?style=flat-square)](https://travis-ci.org/checle/checle-js-boilerplate)
 [![GitHub issues](https://img.shields.io/github/issues/checle/checle-js-boilerplate.svg?style=flat-square)](https://github.com/checle/checle-js-boilerplate/issues)
-[![Tonic test](https://img.shields.io/badge/npm-test-brightgreen.svg?style=flat-square)](https://tonicdev.com/npm/checle-js-boilerplate)
 
 ## Configuration
 
