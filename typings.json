@@ -1,0 +1,6 @@
+{
+  "globalDependencies": {
+    "node": "registry:dt/node#6.0.0+20161006230116",
+    "tape": "registry:dt/tape#4.2.2+20160317120654"
+  }
+}

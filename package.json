@@ -1,0 +1,33 @@
+{
+  "name": "js-vm",
+  "version": "0.0.1",
+  "description": "Pure ECMAScript 5 implementation of the Node.js VM API",
+  "main": "dist/js-vm.js",
+  "scripts": {
+    "prepublish": "npm run clean && typings install && npm run build",
+    "test": "ts-node node_modules/tape/bin/tape test.ts",
+    "lint": "tslint *.ts",
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "typings": "dist/js-vm.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/checle/js-vm.git"
+  },
+  "author": "Filip Dalüge <daluege@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/checle/js-vm/issues"
+  },
+  "homepage": "https://github.com/checle/js-vm",
+  "devDependencies": {
+    "script-replace": "0.0.2",
+    "tape": "^4.6.0",
+    "ts-node": "^1.3.0",
+    "tslint": "^3.15.1",
+    "tslint-config-standard": "^1.5.0",
+    "typescript": "^2.0.6",
+    "typings": "^1.3.2"
+  }
+}
