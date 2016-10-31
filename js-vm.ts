@@ -1,4 +1,4 @@
-import Replace from 'script-replace'
+import Replacer from 'script-replace'
 
 const Context = Symbol('context')
 const Eval = Symbol('eval')
@@ -102,12 +102,12 @@ export class Script {
     const strict = (function () { return this }) === undefined
 
     if (!strict) {
-      let script = new Replace(code)
+      let script = new Replacer(code)
+
+      script.replace(/[^\x20-\x7E]+/g, '')
 
       script.replace(/\bthis\b(?=\s*[^\s\w;,)\]])/g,
         () => '(function () { return this }() === this ? undefined : this)')
-
-      script.replace(/[^\x20-\x7E]+/g, '')
 
       code = script.toString()
     }
