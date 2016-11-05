@@ -1,16 +1,204 @@
-import Replacer from 'script-replace'
+import BaseScript from 'script-transform'
 
-const Context = Symbol('context')
-const Eval = Symbol('eval')
-const BuiltIns = ['Array', 'ArrayBuffer', 'Atomics', 'Boolean', 'DataView', 'Date', 'Error', 'EvalError', 'Float32Array', 'Float64Array', 'Function', 'Generator', 'GeneratorFunction', 'Infinity', 'Int16Array', 'Int32Array', 'Int8Array', 'InternalError', 'Iterator', 'JSON', 'Map', 'Math', 'NaN', 'Number', 'Object', 'ParallelArray', 'Promise', 'Proxy', 'RangeError', 'ReferenceError', 'Reflect', 'RegExp', 'Set', 'SharedArrayBuffer', 'StopIteration', 'String', 'Symbol', 'SyntaxError', 'TypeError', 'URIError', 'Uint16Array', 'Uint32Array', 'Uint8Array', 'Uint8ClampedArray', 'WeakMap', 'WeakSet', 'clearImmediate', 'clearInterval', 'clearTimeout', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'escape', 'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'setImmediate', 'setInterval', 'setTimeout', 'undefined', 'unescape']
-const GlobalSymbols = []
+const CONTEXT = Symbol('context')
 
-for (let name of BuiltIns) BuiltIns[name] = true
+const BuiltIns = ['Array', 'ArrayBuffer', 'Atomics', 'Boolean', 'DataView', 'Date', 'Error', 'EvalError', 'Float32Array', 'Float64Array', 'Function', 'Generator', 'GeneratorFunction', 'Infinity', 'Int16Array', 'Int32Array', 'Int8Array', 'InternalError', 'Iterator', 'JSON', 'Map', 'Math', 'NaN', 'Number', 'Object', 'ParallelArray', 'Promise', 'Proxy', 'RangeError', 'ReferenceError', 'Reflect', 'RegExp', 'Set', 'SharedArrayBuffer', 'StopIteration', 'String', 'Symbol', 'SyntaxError', 'TypeError', 'URIError', 'Uint16Array', 'Uint32Array', 'Uint8Array', 'Uint8ClampedArray', 'WeakMap', 'WeakSet', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'escape', 'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined', 'unescape']
+const Keywords = ['break', 'do', 'instanceof', 'typeof', 'case', 'else', 'new', 'var', 'catch', 'finally', 'return', 'void', 'continue', 'for', 'switch', 'while', 'debugger', 'function', 'this', 'with', 'default', 'if', 'throw', 'delete', 'in', 'try']
+const ReservedWords = {} // ECMA-262 Section 7.6.1
 
-let scope = null
+let globalObject = null
 
-function createScope () {
-  let scope
+function isReservedWord (keyword: string): boolean {
+  if (ReservedWords.hasOwnProperty(keyword)) return ReservedWords[keyword]
+  try {
+    eval('var ' + keyword)
+  } catch (error) {
+    return (ReservedWords[keyword] = true)
+  }
+  return (ReservedWords[keyword] = false)
+}
+
+function isBuiltIn (name: string): boolean {
+  if (BuiltIns.hasOwnProperty(name)) return BuiltIns[name]
+  if (BuiltIns[name] = BuiltIns.indexOf(name) !== -1) {
+    return BuiltIns[name] = true
+  }
+  return false
+}
+
+function Timer (timeout: number): Function {
+  let start
+  let steps = 0
+
+  return () => {
+    if (start == null) {
+      start = Date.now()
+
+      setImmediate(() => {
+        start = null
+        steps = 0
+      })
+      return true
+    }
+    if (steps++ < 10000) return true
+    if (Date.now() - start < timeout) return true
+
+    throw new Error('Script execution timed out')
+  }
+}
+
+export class Context {
+  // Create a context scope and return a function to eval code in the context scope
+  run: Function
+  timer: Function
+
+  constructor (public sandbox: Sandbox) {
+    if (globalObject == null) globalObject = createGlobalScope()
+
+    let run = (new globalObject.Function(`'use strict'; var \\u17a3; return function run () { return eval(arguments[0]) }`))()
+    this.run = run.bind(this.sandbox)
+  }
+}
+
+export interface Sandbox { }
+
+export function createContext(sandbox: Sandbox = {}): Sandbox {
+  if (sandbox.hasOwnProperty(CONTEXT)) throw TypeError('The sandbox has already been contextified')
+
+  if (globalObject == null) globalObject = createGlobalScope()
+
+  let context = new Context(sandbox)
+  sandbox[CONTEXT] = context
+  return sandbox
+}
+
+export function isContext(sandbox: any): sandbox is Sandbox {
+  return CONTEXT in sandbox
+}
+
+export function runInContext(code: string, sandbox: Sandbox, options?: any): any {
+  let script = new Script(code, options)
+  return script.runInContext(sandbox)
+}
+
+export function runInNewContext(code: string, sandbox?: Sandbox, options?: any): any {
+  return runInContext(code, createContext(sandbox), options)
+}
+
+export function runInThisContext(code: string, options?: any): any {
+  return (new Function('return eval(arguments[0])'))(code)
+}
+
+export class Script extends BaseScript {
+  constructor(code: string, protected options: any = {}) {
+    super(code)
+
+    this.applyMagic()
+    this.applyTimer()
+    this.applyGlobal()
+  }
+
+  private applyMagic () {
+    // Reserve the deprecated Unicode character 'Khmer' as a magic character that will never form part of functional code
+    this.replace(/(^|[^\\])\\u17a3/gi, '$1\\u17a2', true)
+  }
+
+  private applyGlobal () {
+    // Test if strict mode is supported
+    const strict = (function() { 'use strict'; return this }) === undefined
+    if (strict) return
+
+    // Replace references to the real global scope caused by function calls in non-strict mode with undefined as in strict mode
+    this.replace(/([^\w$])this\b(?=\s*[^\s=]|\s*$)/g,
+      (input, left) => {
+        return left + `(this === (function () { return this })() ? undefined : this)`
+      })
+  }
+
+  private applyTimer () {
+    // Insert a timer() instruction before the condition statement of a for structure and before any other indistinguishable statements
+    this.replace(/;(\s*(\w+)[\s({]|\s*([^\s;\]})]))/g,
+      (match: string, suffix: string, keyword: string, next: string) => {
+        return keyword && isReservedWord(keyword) ? match : '; \\u17a3.timer()' + (next ? ',' : '') + suffix
+      })
+
+    // Insert a timer() instruction inside the condition statement of a while structure
+    this.replace(/\bwhile\s*\(/g, '$&\\u17a3.timer() && ')
+  }
+
+  runInContext(sandbox: Sandbox, options?: any) {
+    if (!sandbox.hasOwnProperty(CONTEXT)) throw new ReferenceError('Object is not a context')
+
+    options = (options == null) ?
+      this.options :
+      Object.assign(Object.create(this.options), options)
+
+    let context: Context = sandbox[CONTEXT]
+
+    context.timer = options.timeout ? Timer(options.timeout) : () => {}
+
+    // Collect possibly variable-referencing words on any level
+    let identifiers = new Set()
+    this.match(/(?:^|[^.\s\w$\\])\s*([\w$\\]+)/g, (match, identifier) => {
+      identifiers.add(identifier)
+    })
+
+    let definitions = []
+    for (let identifier of identifiers) {
+      if (isReservedWord(identifier) || isBuiltIn(identifier)) continue
+      definitions.push(identifier)
+    }
+
+    let initializer = definitions.length ? `var ${definitions.join(', ')};` : ''
+
+    // A function that initializes in a scope within the context scope possible identifiers present in the script and then evals code
+    context.run = (context.run(`${initializer} (function run () { return eval(arguments[0]) })`))
+
+    // Defines a property on the passed context attaching its value to the local variable counterpart inside the scope
+    let attachProperty = function () {
+      // Initialize value
+      eval(arguments[0] + ' = this[arguments[0]]')
+
+      // Define getter and setter bound to the variable with the same name on the context object
+      Object.defineProperty(this, arguments[0], {
+        get: function () {
+          return eval(arguments[0])
+        }.bind(null, arguments[0]),
+        set: function () {
+          eval(arguments[0] + ' = arguments[1]')
+        }.bind(null, arguments[0]),
+        enumerable: true,
+      })
+    }
+
+    // Initialize function in context scope
+    attachProperty = context.run(`(${attachProperty})`)
+
+    for (let name of definitions) {
+      let descriptor = Object.getOwnPropertyDescriptor(sandbox, name)
+      if (!descriptor || !descriptor.writable || !descriptor.configurable) continue
+
+      attachProperty.call(sandbox, name)
+    }
+
+    // Set the context object
+    context.run.call(context, '\\u17a3 = this')
+
+    // Execute code
+    return context.run(this.toString())
+  }
+
+  runInNewContext(context?: any, options?: any) {
+    return this.runInContext(createContext(context), options)
+  }
+
+  runInThisContext(options?: any) {
+    return runInThisContext(this.code, options)
+  }
+}
+
+function createGlobalScope () {
+  let globalObject
 
   // Create iframe if a DOM exists
   if (typeof document !== 'undefined') {
@@ -20,54 +208,39 @@ function createScope () {
 
     document.documentElement.appendChild(iframe)
 
-    scope = iframe.contentWindow
+    globalObject = iframe.contentWindow
   }
 
-  // Otherwise, target the global scope
-  if (!scope) {
-    scope = (new Function('return this'))() // Access the global object in strict mode
+  // Otherwise, target the current global scope
+  if (!globalObject) {
+    globalObject = (new Function('return this'))() // Access the global object in strict mode
   }
 
-  initScope(scope)
+  initGlobalScope(globalObject)
 
-  return scope
+  return globalObject
 }
 
-function initScope (scope: any) {
-  for (let object = scope; object; object = Object.getPrototypeOf(object)) {
+function initGlobalScope (globalObject: any) {
+  for (let object = globalObject; object; object = Object.getPrototypeOf(object)) {
     let propertyNames = Object.getOwnPropertyNames(object)
 
     for (let name of propertyNames) {
-      // Exempt from exclusion: built-ins (explicitly secured hereinafter) and the `arguments` variable, which be overridden by a local variable of the same name in any function
-      if (BuiltIns.hasOwnProperty(name) || name === 'arguments') continue
-
-      // Variable names spanning non-trivial character sets are an exemption and will not be treated
+      // Non-trivial property names shall not be present initially in the global scope as these are not handled by the parser for the sake of simplicity
       if (!/^[\w$]*$/.test(name)) throw new TypeError('Unexpected global variable ' + name)
-
-      GlobalSymbols.push(name)
     }
   }
 
-  // Seal the global scope: existing properties can be re-set but no new ones can be added
-  // Is applied on the scope of a hidden iframe in the browser, or on the global scope of Node.js, however note that undeclared variable assignments are forbidden anyways in strict mode and are an anti-pattern in a module world
-  Object.seal(scope)
-
-  // Deep-freeze all built-ins so in theory, no run script will ever affect the globally shared objects nor can it leak memory by leaving references behind
+  // Deep-freeze all built-ins so no memory-leaking references may be left behind by a script
   for (let name of BuiltIns) {
-    freezeObject(scope[name])
+    freeze(globalObject[name])
   }
 }
 
-function freezeObject (object: any): any {
+export function freeze (object: any): any {
   if (object == null || Object.isFrozen(object)) return
 
   let properties = Object.getOwnPropertyNames(object)
-
-  // Callables occur in large numbers and can be completely frozen as they never act as prototypes
-  if (typeof object === 'function') {
-    Object.freeze(object)
-    return
-  }
 
   // A frozen property in the prototype chain will prevent a property of the same name on an inheriting object from being set (e.g., `toString`) so circumvent this
   for (let name of properties) {
@@ -97,7 +270,7 @@ function freezeObject (object: any): any {
   }
 
   // Recurse to parent
-  freezeObject(Object.getPrototypeOf(object))
+  freeze(Object.getPrototypeOf(object))
 
   // Freeze properties
   for (let name of properties) {
@@ -105,92 +278,6 @@ function freezeObject (object: any): any {
     let value
     try { value = object[name] }
     catch (error) { continue }
-    freezeObject(value)
-  }
-}
-
-export interface Context { }
-
-export function createContext(object: any = {}): Context {
-  if (Context in object) return object.context
-  if (scope == null) scope = createScope()
-
-  // Contexts are created by extension
-  let context = object[Context] = Object.create(object)
-  let symbols = Object.keys(object).concat(GlobalSymbols)
-  let initializer = `var ${symbols.join(', ')};`
-
-  // A function that initializes all variables locally undefined that are present on the global scope and evals code in this context
-  let run = context[Eval] =
-    (new scope.Function(initializer + ' return function () { return eval(arguments[0]) }'))().bind(context)
-
-  // Function code template
-  function proxy() {
-    Object.defineProperty(arguments[1], arguments[2], {
-      get: function () { return eval(arguments[0]) }.bind(null, arguments[2]),
-      set: function () { eval(arguments[0] + ' = ' + arguments[1]) }.bind(null, arguments[2]),
-      enumerable: true,
-    })
-  }
-  // Code that defines a property on the passed context attaching its value to the local variable counterpart inside the scope
-  let definer = `(${proxy}).apply(this, arguments)`
-
-  for (let name in object) {
-    let value = object[name]
-    run(definer, context, name)
-    context[name] = value
-  }
-
-  return context
-}
-
-export function isContext(context: any): context is Context {
-  return Context in context
-}
-
-export function runInContext(code: string, context: Context, options?: any): any {
-  let script = new Script(code, options)
-  return script.runInContext(context)
-}
-
-export function runInNewContext(code: string, context?: any, options?: any): any {
-  return runInContext(code, createContext(context), options)
-}
-
-export function runInThisContext(code: string, options?: any): any {
-  return (new Function('return eval(arguments[0])'))(code)
-}
-
-export class Script {
-  constructor(private code: string, private options: any = {}) {
-    const strict = (function() { return this }) === undefined
-    const script = new Replacer(code) // Tokenize
-
-    // Strip non-ASCII-text characters (e.g., Unicode) from code portions, string literals not affected
-    script.replace(/[^\x20-\x7E]+/g, '')
-
-    // Replace references to the real global scope caused by function calls in non-strict mode with undefined, just as in strict mode
-    if (!strict) {
-      script.replace(/\bthis\b/g,
-        () => '(function () { return this }() === this ? undefined : this)')
-    }
-
-    code = script.toString()
-  }
-
-  runInContext(context: Context, options?: any) {
-    options = (options == null) ?
-      this.options :
-      Object.assign(Object.create(this.options), options)
-
-    return context[Eval].call(context, this.code)
-  }
-
-  runInNewContext(context?: any, options?: any) {
-    return this.runInContext(createContext(context), options)
-  }
-
-  runInThisContext(options?: any) {
-    return runInThisContext(this.code, options)
+    freeze(value)
   }
 }
