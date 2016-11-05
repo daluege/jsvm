@@ -1,6 +1,6 @@
 {
   "name": "js-vm",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Pure ECMAScript 5 implementation of the Node.js VM API",
   "main": "dist/js-vm.js",
   "scripts": {
@@ -32,6 +32,6 @@
     "typings": "^1.3.2"
   },
   "dependencies": {
-    "script-transform": "0.1.1"
+    "script-transform": "0.2.1"
   }
 }
