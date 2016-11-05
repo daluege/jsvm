@@ -3,7 +3,6 @@ import BaseScript from 'script-transform'
 const CONTEXT = Symbol('context')
 
 const BuiltIns = ['Array', 'ArrayBuffer', 'Atomics', 'Boolean', 'DataView', 'Date', 'Error', 'EvalError', 'Float32Array', 'Float64Array', 'Function', 'Generator', 'GeneratorFunction', 'Infinity', 'Int16Array', 'Int32Array', 'Int8Array', 'InternalError', 'Iterator', 'JSON', 'Map', 'Math', 'NaN', 'Number', 'Object', 'ParallelArray', 'Promise', 'Proxy', 'RangeError', 'ReferenceError', 'Reflect', 'RegExp', 'Set', 'SharedArrayBuffer', 'StopIteration', 'String', 'Symbol', 'SyntaxError', 'TypeError', 'URIError', 'Uint16Array', 'Uint32Array', 'Uint8Array', 'Uint8ClampedArray', 'WeakMap', 'WeakSet', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'escape', 'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined', 'unescape']
-const Keywords = ['break', 'do', 'instanceof', 'typeof', 'case', 'else', 'new', 'var', 'catch', 'finally', 'return', 'void', 'continue', 'for', 'switch', 'while', 'debugger', 'function', 'this', 'with', 'default', 'if', 'throw', 'delete', 'in', 'try']
 const ReservedWords = {} // ECMA-262 Section 7.6.1
 
 let globalObject = null
@@ -34,10 +33,10 @@ function Timer (timeout: number): Function {
     if (start == null) {
       start = Date.now()
 
-      setImmediate(() => {
+      setTimeout(() => {
         start = null
         steps = 0
-      })
+      }, 0)
       return true
     }
     if (steps++ < 10000) return true
@@ -138,14 +137,16 @@ export class Script extends BaseScript {
     context.timer = options.timeout ? Timer(options.timeout) : () => {}
 
     // Collect possibly variable-referencing words on any level
-    let identifiers = new Set()
+    let identifiers = {}
     this.match(/(?:^|[^.\s\w$\\])\s*([\w$\\]+)/g, (match, identifier) => {
-      identifiers.add(identifier)
+      identifiers[identifier] = identifier
     })
 
     let definitions = []
-    for (let identifier of identifiers) {
+    for (let identifier in identifiers) {
+      if (!identifiers.hasOwnProperty(identifier)) continue
       if (isReservedWord(identifier) || isBuiltIn(identifier)) continue
+
       definitions.push(identifier)
     }
 

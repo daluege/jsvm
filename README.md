@@ -6,7 +6,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/daluege/js-vm.svg?style=flat-square)](https://github.com/daluege/js-vm/issues)
 [![Coding style](https://img.shields.io/badge/code%20style-standard-blue.svg?style=flat-square)](http://standardjs.com/)
 
-`js-vm` is a highly secure, fully compatible implementation of the [Node.js VM API](https://nodejs.org/api/vm.html) in pure ECMAScript 5. It may be used as a `vm` shim in [webpack](http://webpack.github.io/). It has a footprint of 6KB and does not depend on any browser technologies.
+`js-vm` is a highly secure, fully compatible implementation of the [Node.js VM API](https://nodejs.org/api/vm.html) in pure ECMAScript 5. It may be used as a `vm` shim in [webpack](http://webpack.github.io/). It has a footprint of 7KB and does not depend on browser technologies or the DOM.
 
 `js-vm` is designed with high demands in efficiency and security:
 
