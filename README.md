@@ -6,7 +6,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/daluege/js-vm.svg?style=flat-square)](https://github.com/daluege/js-vm/issues)
 [![Coding style](https://img.shields.io/badge/code%20style-standard-blue.svg?style=flat-square)](http://standardjs.com/)
 
-`js-vm` is a highly secure, fully compatible implementation of the [Node.js VM API](https://nodejs.org/api/vm.html) in pure ECMAScript 5. It may be used as a `vm` shim in [webpack](http://webpack.github.io/). It has a footprint of 7KB and does not depend on browser technologies or the DOM.
+`js-vm` is a highly secure, fully compatible implementation of the [Node.js VM API](https://nodejs.org/api/vm.html) in pure ECMAScript 5. It may be used as a `vm` shim in [webpack](http://webpack.github.io/). It has a footprint of 7KB and does not depend on browser technologies such as the DOM.
 
 `js-vm` is designed with high demands in efficiency and security:
 
@@ -48,10 +48,6 @@ To achieve this, from the perspective of an executed script, built-in
 frozen. Any modifications on properties or sub-properties of built-in
 objects (such as `Object.prototype.toString`)
 will be discarded (see the behavior of [`Object.freeze()`](https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze)).
-
-Considering the modification of built-in prototypes an anti-pattern in a
-modularized ECMAScript ecosystem anyway, we regard the increased strictness
-enforced by `js-vm` as an improvement for code quality.
 
 `js-vm` will not freeze any objects of the host script but will attempt
 to execute scripts in a separate global scope whenever technically

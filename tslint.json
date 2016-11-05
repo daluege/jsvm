@@ -6,6 +6,7 @@
     "one-variable-per-declaration": false,
     "one-line": false,
     "no-conditional-assignment": false,
+    "no-eval": false,
     "trailing-comma": [true, {"multiline": "always", "singleline": "never"}]
   }
 }

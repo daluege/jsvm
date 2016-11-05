@@ -2,7 +2,13 @@ import BaseScript from 'script-transform'
 
 const CONTEXT = Symbol('context')
 
-const BuiltIns = ['Array', 'ArrayBuffer', 'Atomics', 'Boolean', 'DataView', 'Date', 'Error', 'EvalError', 'Float32Array', 'Float64Array', 'Function', 'Generator', 'GeneratorFunction', 'Infinity', 'Int16Array', 'Int32Array', 'Int8Array', 'InternalError', 'Iterator', 'JSON', 'Map', 'Math', 'NaN', 'Number', 'Object', 'ParallelArray', 'Promise', 'Proxy', 'RangeError', 'ReferenceError', 'Reflect', 'RegExp', 'Set', 'SharedArrayBuffer', 'StopIteration', 'String', 'Symbol', 'SyntaxError', 'TypeError', 'URIError', 'Uint16Array', 'Uint32Array', 'Uint8Array', 'Uint8ClampedArray', 'WeakMap', 'WeakSet', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent', 'escape', 'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined', 'unescape']
+const BuiltIns = ['Array', 'ArrayBuffer', 'Atomics', 'Boolean', 'DataView', 'Date', 'Error', 'EvalError',
+  'Float32Array', 'Float64Array', 'Function', 'Generator', 'GeneratorFunction', 'Infinity', 'Int16Array', 'Int32Array',
+  'Int8Array', 'InternalError', 'Iterator', 'JSON', 'Map', 'Math', 'NaN', 'Number', 'Object', 'ParallelArray',
+  'Promise', 'Proxy', 'RangeError', 'ReferenceError', 'Reflect', 'RegExp', 'Set', 'SharedArrayBuffer', 'StopIteration',
+  'String', 'Symbol', 'SyntaxError', 'TypeError', 'URIError', 'Uint16Array', 'Uint32Array', 'Uint8Array',
+  'Uint8ClampedArray', 'WeakMap', 'WeakSet', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent',
+  'escape', 'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined', 'unescape']
 const ReservedWords = {} // ECMA-262 Section 7.6.1
 
 let globalObject = null
@@ -33,10 +39,12 @@ function Timer (timeout: number): Function {
     if (start == null) {
       start = Date.now()
 
-      setTimeout(() => {
-        start = null
-        steps = 0
-      }, 0)
+      setTimeout(
+        () => {
+          start = null
+          steps = 0
+        },
+        0)
       return true
     }
     if (steps++ < 10000) return true
@@ -54,7 +62,8 @@ export class Context {
   constructor (public sandbox: Sandbox) {
     if (globalObject == null) globalObject = createGlobalScope()
 
-    let run = (new globalObject.Function(`'use strict'; var \\u17a3; return function run () { return eval(arguments[0]) }`))()
+    let run = (
+      new globalObject.Function(`'use strict'; var \\u17a3; return function run () { return eval(arguments[0]) }`))()
     this.run = run.bind(this.sandbox)
   }
 }
@@ -97,34 +106,6 @@ export class Script extends BaseScript {
     this.applyGlobal()
   }
 
-  private applyMagic () {
-    // Reserve the deprecated Unicode character 'Khmer' as a magic character that will never form part of functional code
-    this.replace(/(^|[^\\])\\u17a3/gi, '$1\\u17a2', true)
-  }
-
-  private applyGlobal () {
-    // Test if strict mode is supported
-    const strict = (function() { 'use strict'; return this }) === undefined
-    if (strict) return
-
-    // Replace references to the real global scope caused by function calls in non-strict mode with undefined as in strict mode
-    this.replace(/([^\w$])this\b(?=\s*[^\s=]|\s*$)/g,
-      (input, left) => {
-        return left + `(this === (function () { return this })() ? undefined : this)`
-      })
-  }
-
-  private applyTimer () {
-    // Insert a timer() instruction before the condition statement of a for structure and before any other indistinguishable statements
-    this.replace(/;(\s*(\w+)[\s({]|\s*([^\s;\]})]))/g,
-      (match: string, suffix: string, keyword: string, next: string) => {
-        return keyword && isReservedWord(keyword) ? match : '; \\u17a3.timer()' + (next ? ',' : '') + suffix
-      })
-
-    // Insert a timer() instruction inside the condition statement of a while structure
-    this.replace(/\bwhile\s*\(/g, '$&\\u17a3.timer() && ')
-  }
-
   runInContext(sandbox: Sandbox, options?: any) {
     if (!sandbox.hasOwnProperty(CONTEXT)) throw new ReferenceError('Object is not a context')
 
@@ -134,7 +115,7 @@ export class Script extends BaseScript {
 
     let context: Context = sandbox[CONTEXT]
 
-    context.timer = options.timeout ? Timer(options.timeout) : () => {}
+    context.timer = options.timeout ? Timer(options.timeout) : () => undefined
 
     // Collect possibly variable-referencing words on any level
     let identifiers = {}
@@ -195,6 +176,34 @@ export class Script extends BaseScript {
 
   runInThisContext(options?: any) {
     return runInThisContext(this.code, options)
+  }
+
+  private applyMagic () {
+    // Reserve the deprecated Unicode character 'Khmer' as a magic character that will never form part of functional code
+    this.replace(/(^|[^\\])\\u17a3/gi, '$1\\u17a2', true)
+  }
+
+  private applyGlobal () {
+    // Test if strict mode is supported
+    const strict = (function() { 'use strict'; return this }) === undefined
+    if (strict) return
+
+    // Replace references to the real global scope caused by function calls in non-strict mode with undefined as in strict mode
+    this.replace(/([^\w$])this\b(?=\s*[^\s=]|\s*$)/g,
+      (input, left) => {
+        return left + `(this === (function () { return this })() ? undefined : this)`
+      })
+  }
+
+  private applyTimer () {
+    // Insert a timer() instruction before the condition statement of a for structure and before any other indistinguishable statements
+    this.replace(/;(\s*(\w+)[\s({]|\s*([^\s;\]})]))/g,
+      (match: string, suffix: string, keyword: string, next: string) => {
+        return keyword && isReservedWord(keyword) ? match : '; \\u17a3.timer()' + (next ? ',' : '') + suffix
+      })
+
+    // Insert a timer() instruction inside the condition statement of a while structure
+    this.replace(/\bwhile\s*\(/g, '$&\\u17a3.timer() && ')
   }
 }
 
