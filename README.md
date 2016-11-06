@@ -5,9 +5,9 @@
 [![Build status](https://img.shields.io/travis/daluege/jsvm/master.svg?style=flat-square)](https://travis-ci.org/daluege/jsvm)
 [![Coding style](https://img.shields.io/badge/code%20style-standard-blue.svg?style=flat-square)](http://standardjs.com/)
 
-`jsvm` is a highly secure, fully compatible implementation of the [Node.js VM API](https://nodejs.org/api/vm.html) in pure ECMAScript 5. It may be used as a `vm` shim in [webpack](http://webpack.github.io/). It has a footprint of 7KB and does not depend on browser technologies such as the DOM.
+`jsvm` is a secure and fully compatible implementation of the [Node.js VM API](https://nodejs.org/api/vm.html) in pure ECMAScript 5. It has a footprint of 7KB, does not depend on browser technologies such as the DOM. While `jsvm` can be used excellently as a [webpack shim](https://webpack.github.io/docs/configuration.html#resolve-alias) for `vm`, you just could use it instead of `vm` in Node.js, too.
 
-`jsvm` is designed with high demands in efficiency and security in mind:
+`jsvm` has been designed with efficiency and security in mind:
 
 * Code is transpiled only on the basis of native `RegExp` tokenization
   and no AST is created, increasing speed by a huge factor. The cost
