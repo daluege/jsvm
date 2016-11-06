@@ -4,8 +4,10 @@ import * as vm from '../jsvm'
 
 test('basic', (t) => {
   t.test('runInNewContext()', (t) => {
+    let result
     let sandbox = { }
-    let result = vm.runInNewContext(
+
+    result = vm.runInNewContext(
       'this.foo = "bar"; this.typeofProcess = typeof process; typeof Object',
       sandbox
     )
@@ -15,6 +17,12 @@ test('basic', (t) => {
     })
     t.equal(result, 'function')
 
+    result = vm.runInNewContext(
+      'var vmResult = "foo"; typeof process'
+    )
+    t.equal(global['vmResult'], undefined)
+    t.equal(result, 'undefined')
+
     t.end()
   })
 
@@ -22,7 +30,7 @@ test('basic', (t) => {
     let sandbox = { foo: 'bar' }
     let context = vm.createContext(sandbox)
     let result = vm.runInContext(
-      'baz = foo; this.typeofProcess = typeof process; typeof Object',
+      'this.baz = foo; this.typeofProcess = typeof process; typeof Object',
       context
     )
     t.deepEqual(sandbox, {
@@ -42,16 +50,6 @@ test('basic', (t) => {
     t.equal(global['vmResult'], 'foo')
     t.equal(result, '[object process]')
     delete global['vmResult']
-
-    t.end()
-  })
-
-  t.test('runInNewContext()', (t) => {
-    let result = vm.runInNewContext(
-      'this.vmResult = "foo"; typeof process'
-    )
-    t.equal(global['vmResult'], undefined)
-    t.equal(result, 'undefined')
 
     t.end()
   })

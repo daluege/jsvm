@@ -132,11 +132,19 @@ export class Script extends BaseScript {
       Object.defineProperty(this, arguments[0], {
         get: function () {
           return eval(arguments[0])
-        }.bind(null, arguments[0]),
+        }.bind(this, arguments[0]),
         set: function () {
           eval(arguments[0] + ' = arguments[1]')
-        }.bind(null, arguments[0]),
-        enumerable: true,
+
+          // Make property enumerable once it has been set
+          if (!this.propertyIsEnumerable(arguments[0])) {
+            let descriptor = Object.getOwnPropertyDescriptor(this, arguments[0])
+            descriptor.enumerable = true
+            Object.defineProperty(this, arguments[0], descriptor)
+          }
+        }.bind(this, arguments[0]),
+        enumerable: this.hasOwnProperty(arguments[0]),
+        configurable: true,
       })
     }
 
@@ -145,7 +153,7 @@ export class Script extends BaseScript {
 
     for (let name of definitions) {
       let descriptor = Object.getOwnPropertyDescriptor(sandbox, name)
-      if (!descriptor || !descriptor.writable || !descriptor.configurable) continue
+      if (descriptor && (!descriptor.writable || !descriptor.configurable)) continue
 
       attachProperty.call(sandbox, name)
     }
@@ -153,7 +161,6 @@ export class Script extends BaseScript {
     // Set the context object
     context.run.call(context, '\\u17a3 = this')
 
-    console.log(this.toString())
     // Execute code
     return context.run.call(sandbox, this.toString())
   }
