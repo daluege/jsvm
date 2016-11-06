@@ -1,5 +1,5 @@
 import * as test from 'tape'
 
-test('js-vm', (t) => {
+test('jsvm', (t) => {
   t.end()
 })

@@ -43,8 +43,7 @@ function Timer (timeout: number): Function {
         () => {
           start = null
           steps = 0
-        },
-        0)
+        }, 0)
       return true
     }
     if (steps++ < 10000) return true
@@ -55,13 +54,13 @@ function Timer (timeout: number): Function {
 }
 
 export class Context {
-  // Create a context scope and return a function to eval code in the context scope
   run: Function
   timer: Function
 
   constructor (public sandbox: Sandbox) {
     if (globalObject == null) globalObject = createGlobalScope()
 
+    // Create a context scope and return a function to eval code in the context scope
     let run = (
       new globalObject.Function(`'use strict'; var \\u17a3; return function run () { return eval(arguments[0]) }`))()
     this.run = run.bind(this.sandbox)
@@ -98,7 +97,7 @@ export function runInThisContext(code: string, options?: any): any {
 }
 
 export class Script extends BaseScript {
-  constructor(code: string, protected options: any = {}) {
+  constructor(code: string | Script, protected options: any = {}) {
     super(code)
 
     this.applyMagic()
@@ -175,7 +174,7 @@ export class Script extends BaseScript {
   }
 
   runInThisContext(options?: any) {
-    return runInThisContext(this.code, options)
+    return runInThisContext(this.toString(), options)
   }
 
   private applyMagic () {
