@@ -6,7 +6,7 @@
   "browser": "dist/browser.js",
   "scripts": {
     "prepublish": "npm run clean && typings install && npm run dist",
-    "test": "ts-node node_modules/tape/bin/tape test.ts",
+    "test": "ts-node node_modules/tape/bin/tape test/*.ts",
     "lint": "tslint *.ts",
     "build": "tsc",
     "dist": "npm run build && webpack dist/jsvm.js dist/browser.js && babili -s --no-comments --compact true dist/browser.js -o dist/browser.js",
