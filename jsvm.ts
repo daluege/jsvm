@@ -1,4 +1,5 @@
 import BaseScript from 'script-transform'
+import {isReservedWord} from 'script-transform'
 
 const CONTEXT = Symbol('context')
 
@@ -9,19 +10,8 @@ const BuiltIns = ['Array', 'ArrayBuffer', 'Atomics', 'Boolean', 'DataView', 'Dat
   'String', 'Symbol', 'SyntaxError', 'TypeError', 'URIError', 'Uint16Array', 'Uint32Array', 'Uint8Array',
   'Uint8ClampedArray', 'WeakMap', 'WeakSet', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent',
   'escape', 'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined', 'unescape']
-const ReservedWords = {} // ECMA-262 Section 7.6.1
 
 let globalObject = null
-
-function isReservedWord (keyword: string): boolean {
-  if (ReservedWords.hasOwnProperty(keyword)) return ReservedWords[keyword]
-  try {
-    eval('var ' + keyword)
-  } catch (error) {
-    return (ReservedWords[keyword] = true)
-  }
-  return (ReservedWords[keyword] = false)
-}
 
 function isBuiltIn (name: string): boolean {
   if (BuiltIns.hasOwnProperty(name)) return BuiltIns[name]
@@ -57,13 +47,10 @@ export class Context {
   run: Function
   timer: Function
 
-  constructor (public sandbox: Sandbox) {
-    if (globalObject == null) globalObject = createGlobalScope()
-
+  constructor (public sandbox: Sandbox, public global: any) {
     // Create a context scope and return a function to eval code in the context scope
-    let run = (
-      new globalObject.Function(`'use strict'; var \\u17a3; return function run () { return eval(arguments[0]) }`))()
-    this.run = run.bind(this.sandbox)
+    this.run = (
+      new global.Function(`'use strict'; var \\u17a3; return function run () { return eval(arguments[0]) }`))()
   }
 }
 
@@ -74,7 +61,7 @@ export function createContext(sandbox: Sandbox = {}): Sandbox {
 
   if (globalObject == null) globalObject = createGlobalScope()
 
-  let context = new Context(sandbox)
+  let context = new Context(sandbox, globalObject)
   sandbox[CONTEXT] = context
   return sandbox
 }
@@ -117,9 +104,10 @@ export class Script extends BaseScript {
     context.timer = options.timeout ? Timer(options.timeout) : () => undefined
 
     // Collect possibly variable-referencing words on any level
-    let identifiers = {}
-    this.match(/(?:^|[^.\s\w$\\])\s*([\w$\\]+)/g, (match, identifier) => {
-      identifiers[identifier] = identifier
+    let identifiers = { '\\u17a3': true }
+    let lul = []
+    this.match(/[\w\\]+/g, identifier => {
+      identifiers[identifier] = true
     })
 
     let definitions = []
@@ -165,8 +153,9 @@ export class Script extends BaseScript {
     // Set the context object
     context.run.call(context, '\\u17a3 = this')
 
+    console.log(this.toString())
     // Execute code
-    return context.run(this.toString())
+    return context.run.call(sandbox, this.toString())
   }
 
   runInNewContext(context?: any, options?: any) {
@@ -190,7 +179,7 @@ export class Script extends BaseScript {
     // Replace references to the real global scope caused by function calls in non-strict mode with undefined as in strict mode
     this.replace(/([^\w$])this\b(?=\s*[^\s=]|\s*$)/g,
       (input, left) => {
-        return left + `(this === (function () { return this })() ? undefined : this)`
+        return left + `(this === \\u17a3.global ? undefined : this)`
       })
   }
 
@@ -231,15 +220,6 @@ function createGlobalScope () {
 }
 
 function initGlobalScope (globalObject: any) {
-  for (let object = globalObject; object; object = Object.getPrototypeOf(object)) {
-    let propertyNames = Object.getOwnPropertyNames(object)
-
-    for (let name of propertyNames) {
-      // Non-trivial property names shall not be present initially in the global scope as these are not handled by the parser for the sake of simplicity
-      if (!/^[\w$]*$/.test(name)) throw new TypeError('Unexpected global variable ' + name)
-    }
-  }
-
   // Deep-freeze all built-ins so no memory-leaking references may be left behind by a script
   for (let name of BuiltIns) {
     freeze(globalObject[name])
