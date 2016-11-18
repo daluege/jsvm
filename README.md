@@ -61,7 +61,6 @@ separate global scope. This is the case in Node.js and in a browser.
 
 * All scripts run in _strict mode_ (or a superset, depending on browser support).
 * Built-in objects (`Object`, `Array`, `Date` etc.) and their prototypes are immutable.
-  This includes properties such as `RegExp.lastMatch`, which would normally change dynamically.
 
 ### Intentional differences
 

@@ -56,7 +56,7 @@ export class Context {
 
 export interface Sandbox { }
 
-export function createContext(sandbox: Sandbox = {}): Sandbox {
+export function createContext <T> (sandbox: T = {} as T): T {
   if (sandbox.hasOwnProperty(CONTEXT)) throw TypeError('The sandbox has already been contextified')
 
   if (globalObject == null) globalObject = createGlobalScope()
@@ -180,7 +180,7 @@ export class Script extends BaseScript {
 
   private applyGlobal () {
     // Test if strict mode is supported
-    const strict = (function() { 'use strict'; return this }) === undefined
+    const strict = (function() { 'use strict'; return this })() === undefined
     if (strict) return
 
     // Replace references to the real global scope caused by function calls in non-strict mode with undefined as in strict mode
@@ -234,7 +234,8 @@ function initGlobalScope (globalObject: any) {
 }
 
 export function freeze (object: any): any {
-  if (object == null || Object.isFrozen(object)) return
+  if (object === global) new TypeError('Cannot freeze the global scope')
+  if (object == null || Object.isFrozen(object)) return object
 
   let properties = Object.getOwnPropertyNames(object)
 
@@ -247,7 +248,7 @@ export function freeze (object: any): any {
           return descriptor.value
         },
         set (value) {
-          if (this === object) return
+          if (this === object) return object
 
           // Defines a property on the inheritor, preventing the frozen parent from being set
           Object.defineProperty(this, name, { value, writable: true, configurable: true, enumerable: descriptor.enumerable })
@@ -276,4 +277,6 @@ export function freeze (object: any): any {
     catch (error) { continue }
     freeze(value)
   }
+
+  return object
 }

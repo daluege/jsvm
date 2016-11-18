@@ -18,7 +18,7 @@ test('basic', (t) => {
     t.equal(result, 'function')
 
     result = vm.runInNewContext(
-      'var vmResult = "foo"; typeof process'
+      'vmResult = "foo"; typeof process'
     )
     t.equal(global['vmResult'], undefined)
     t.equal(result, 'undefined')
