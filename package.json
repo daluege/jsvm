@@ -1,6 +1,6 @@
 {
   "name": "jsvm",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Pure ECMAScript 5 implementation of the Node.js VM API",
   "main": "dist/jsvm.js",
   "browser": "dist/browser.js",
@@ -34,6 +34,5 @@
     "webpack": "^1.13.3"
   },
   "dependencies": {
-    "script-transform": "0.3.0"
   }
 }

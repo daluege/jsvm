@@ -1,5 +1,5 @@
-import BaseScript from 'script-transform'
-import {isReservedWord} from 'script-transform'
+import escape from './escape'
+import {isReservedWord} from './escape'
 
 const CONTEXT = Symbol('context')
 
@@ -83,14 +83,16 @@ export function runInThisContext(code: string, options?: any): any {
   return (new Function('return eval(arguments[0])'))(code)
 }
 
-export class Script extends BaseScript {
-  constructor(code: string | Script, protected options: any = {}) {
-    super(code)
+export class Script {
+  constructor(code, protected options: any = {}) {
+    this.code = escape(code)
 
     this.applyMagic()
     this.applyTimer()
     this.applyGlobal()
   }
+
+  code: string
 
   runInContext(sandbox: Sandbox, options?: any) {
     if (!sandbox.hasOwnProperty(CONTEXT)) throw new ReferenceError('Object is not a context')
@@ -105,10 +107,10 @@ export class Script extends BaseScript {
 
     // Collect possibly variable-referencing words on any level
     let identifiers = { '\\u17a3': true }
-    let lul = []
-    this.match(/[\w\\]+/g, identifier => {
-      identifiers[identifier] = true
-    })
+    
+    let pattern = /(?:\\.)?(\w+|\u.{4})+/g
+    let match
+    while ((match = pattern.exec(this.code))) identifiers[match[1]] = true
 
     let definitions = []
     for (let identifier in identifiers) {
@@ -162,7 +164,7 @@ export class Script extends BaseScript {
     context.run.call(context, '\\u17a3 = this')
 
     // Execute code
-    return context.run.call(sandbox, this.toString())
+    return context.run.call(sandbox, this.code)
   }
 
   runInNewContext(context?: any, options?: any) {
@@ -170,12 +172,12 @@ export class Script extends BaseScript {
   }
 
   runInThisContext(options?: any) {
-    return runInThisContext(this.toString(), options)
+    return runInThisContext(this.code, options)
   }
 
   private applyMagic () {
     // Reserve the deprecated Unicode character 'Khmer' as a magic character that will never form part of functional code
-    this.replace(/(^|[^\\])\\u17a3/gi, '$1\\u17a2', true)
+    this.code = this.code.replace(/(^|[^\\])\\u17a3/gi, '$1\\u17a2')
   }
 
   private applyGlobal () {
@@ -184,7 +186,7 @@ export class Script extends BaseScript {
     if (strict) return
 
     // Replace references to the real global scope caused by function calls in non-strict mode with undefined as in strict mode
-    this.replace(/([^\w$])this\b(?=\s*[^\s=]|\s*$)/g,
+    this.code = this.code.replace(/([^\w$])this\b(?=\s*[^\s=]|\s*$)/g,
       (input, left) => {
         return left + `(this === \\u17a3.global ? undefined : this)`
       })
@@ -192,13 +194,13 @@ export class Script extends BaseScript {
 
   private applyTimer () {
     // Insert a timer() instruction before the condition statement of a for structure and before any other indistinguishable statements
-    this.replace(/;(\s*(\w+)[\s({]|\s*([^\s;\]})]))/g,
+    this.code = this.code.replace(/;(\s*(\w+)[\s({]|\s*([^\s;\]})]))/g,
       (match: string, suffix: string, keyword: string, next: string) => {
         return keyword && isReservedWord(keyword) ? match : '; \\u17a3.timer()' + (next ? ',' : '') + suffix
       })
 
     // Insert a timer() instruction inside the condition statement of a while structure
-    this.replace(/\bwhile\s*\(/g, '$&\\u17a3.timer() && ')
+    this.code = this.code.replace(/\bwhile\s*\(/g, '$&\\u17a3.timer() && ')
   }
 }
 
