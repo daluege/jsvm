@@ -1,6 +1,7 @@
 *.log
+*.js
+*.map
+*.d.ts
 
-build
-dist
 node_modules
 typings

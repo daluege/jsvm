@@ -1,31 +1,17 @@
-import escape from './escape'
-import {isReservedWord} from './escape'
+import Code from './code'
+import {createGlobalObject, isBuiltIn} from './object'
+import {isReservedWord} from './syntax'
 
 const CONTEXT = Symbol('context')
-
-const BuiltIns = ['Array', 'ArrayBuffer', 'Atomics', 'Boolean', 'DataView', 'Date', 'Error', 'EvalError',
-  'Float32Array', 'Float64Array', 'Function', 'Generator', 'GeneratorFunction', 'Infinity', 'Int16Array', 'Int32Array',
-  'Int8Array', 'InternalError', 'Iterator', 'JSON', 'Map', 'Math', 'NaN', 'Number', 'Object', 'ParallelArray',
-  'Promise', 'Proxy', 'RangeError', 'ReferenceError', 'Reflect', 'RegExp', 'Set', 'SharedArrayBuffer', 'StopIteration',
-  'String', 'Symbol', 'SyntaxError', 'TypeError', 'URIError', 'Uint16Array', 'Uint32Array', 'Uint8Array',
-  'Uint8ClampedArray', 'WeakMap', 'WeakSet', 'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent',
-  'escape', 'eval', 'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'undefined', 'unescape']
+const TIME_INTERRUPT = 10000
 
 let globalObject = null
 
-function isBuiltIn (name: string): boolean {
-  if (BuiltIns.hasOwnProperty(name)) return BuiltIns[name]
-  if (BuiltIns[name] = BuiltIns.indexOf(name) !== -1) {
-    return BuiltIns[name] = true
-  }
-  return false
-}
-
-function Timer (timeout: number): Function {
+function createTimer (timeout: number) {
   let start
   let steps = 0
 
-  return () => {
+  return (): any => {
     if (start == null) {
       start = Date.now()
 
@@ -36,7 +22,7 @@ function Timer (timeout: number): Function {
         }, 0)
       return true
     }
-    if (steps++ < 10000) return true
+    if (steps++ < TIME_INTERRUPT) return true
     if (Date.now() - start < timeout) return true
 
     throw new Error('Script execution timed out')
@@ -44,22 +30,27 @@ function Timer (timeout: number): Function {
 }
 
 export class Context {
-  run: Function
-  timer: Function
+  eval: Function
+  time: Function
 
   constructor (public sandbox: Sandbox, public global: any) {
     // Create a context scope and return a function to eval code in the context scope
-    this.run = (
-      new global.Function(`'use strict'; var \\u17a3; return function run () { return eval(arguments[0]) }`))()
+    this.eval = (
+      new global.Function(`'use strict'; return function () { return eval(arguments[0]) }`))()
+  }
+
+  // A function that evaluates code in the context target scope and returns a resulting new scope on top of the previous one
+  exec (code: string, global?: any): void {
+    this.eval = this.eval.call(global, `${code}\n;\n(function () { return eval(arguments[0]) })`)
   }
 }
 
 export interface Sandbox { }
 
-export function createContext <T> (sandbox: T = {} as T): T {
+export function createContext <T> (sandbox: T = {} as T): T & Sandbox {
   if (sandbox.hasOwnProperty(CONTEXT)) throw TypeError('The sandbox has already been contextified')
 
-  if (globalObject == null) globalObject = createGlobalScope()
+  if (globalObject == null) globalObject = createGlobalObject()
 
   let context = new Context(sandbox, globalObject)
   sandbox[CONTEXT] = context
@@ -83,16 +74,12 @@ export function runInThisContext(code: string, options?: any): any {
   return (new Function('return eval(arguments[0])'))(code)
 }
 
-export class Script {
-  constructor(code, protected options: any = {}) {
-    this.code = escape(code)
+export class Script extends String {
+  code: Code = new Code(this.valueOf())
 
-    this.applyMagic()
-    this.applyTimer()
-    this.applyGlobal()
+  constructor (code: string, protected options: any = {}) {
+    super(code)
   }
-
-  code: string
 
   runInContext(sandbox: Sandbox, options?: any) {
     if (!sandbox.hasOwnProperty(CONTEXT)) throw new ReferenceError('Object is not a context')
@@ -101,18 +88,15 @@ export class Script {
       this.options :
       Object.assign(Object.create(this.options), options)
 
-    let context: Context = sandbox[CONTEXT]
-
-    context.timer = options.timeout ? Timer(options.timeout) : () => undefined
+    const context: Context = sandbox[CONTEXT]
 
     // Collect possibly variable-referencing words on any level
-    let identifiers = { '\\u17a3': true }
-    
-    let pattern = /(?:\\.)?(\w+|\u.{4})+/g
+    const identifiers = {}
+    const pattern = /(?:\\.)?(\w+|\u.{4})+/g
     let match
-    while ((match = pattern.exec(this.code))) identifiers[match[1]] = true
+    while ((match = pattern.exec(this.code.toString()))) identifiers[match[1]] = true
 
-    let definitions = []
+    const definitions = []
     for (let identifier in identifiers) {
       if (!identifiers.hasOwnProperty(identifier)) continue
       if (isReservedWord(identifier) || isBuiltIn(identifier)) continue
@@ -120,10 +104,8 @@ export class Script {
       definitions.push(identifier)
     }
 
-    let initializer = definitions.length ? `var ${definitions.join(', ')};` : ''
-
-    // A function that initializes in a scope within the context scope possible identifiers present in the script and then evals code
-    context.run = (context.run(`${initializer} (function run () { return eval(arguments[0]) })`))
+    // Initialize possible identifiers present in the script in the context scope
+    if (definitions.length) context.exec(`var ${definitions.join(', ')}`)
 
     // Defines a property on the passed context attaching its value to the local variable counterpart inside the scope
     let attachProperty = function () {
@@ -151,7 +133,7 @@ export class Script {
     }
 
     // Initialize function in context scope
-    attachProperty = context.run(`(${attachProperty})`)
+    attachProperty = context.eval(`(${attachProperty})`)
 
     for (let name of definitions) {
       let descriptor = Object.getOwnPropertyDescriptor(sandbox, name)
@@ -160,11 +142,12 @@ export class Script {
       attachProperty.call(sandbox, name)
     }
 
-    // Set the context object
-    context.run.call(context, '\\u17a3 = this')
+    options = {
+      time: options.timeout && createTimer(options.timeout)
+    }
 
     // Execute code
-    return context.run.call(sandbox, this.code)
+    return this.code.eval(function () { return context.eval.apply(sandbox, arguments) }, options)
   }
 
   runInNewContext(context?: any, options?: any) {
@@ -172,113 +155,6 @@ export class Script {
   }
 
   runInThisContext(options?: any) {
-    return runInThisContext(this.code, options)
+    return runInThisContext(this.code.toString(), options)
   }
-
-  private applyMagic () {
-    // Reserve the deprecated Unicode character 'Khmer' as a magic character that will never form part of functional code
-    this.code = this.code.replace(/(^|[^\\])\\u17a3/gi, '$1\\u17a2')
-  }
-
-  private applyGlobal () {
-    // Test if strict mode is supported
-    const strict = (function() { 'use strict'; return this })() === undefined
-    if (strict) return
-
-    // Replace references to the real global scope caused by function calls in non-strict mode with undefined as in strict mode
-    this.code = this.code.replace(/([^\w$])this\b(?=\s*[^\s=]|\s*$)/g,
-      (input, left) => {
-        return left + `(this === \\u17a3.global ? undefined : this)`
-      })
-  }
-
-  private applyTimer () {
-    // Insert a timer() instruction before the condition statement of a for structure and before any other indistinguishable statements
-    this.code = this.code.replace(/;(\s*(\w+)[\s({]|\s*([^\s;\]})]))/g,
-      (match: string, suffix: string, keyword: string, next: string) => {
-        return keyword && isReservedWord(keyword) ? match : '; \\u17a3.timer()' + (next ? ',' : '') + suffix
-      })
-
-    // Insert a timer() instruction inside the condition statement of a while structure
-    this.code = this.code.replace(/\bwhile\s*\(/g, '$&\\u17a3.timer() && ')
-  }
-}
-
-function createGlobalScope () {
-  let globalObject
-
-  // Create iframe if a DOM exists
-  if (typeof document !== 'undefined') {
-    let iframe = document.createElement('iframe')
-    if (!iframe.style) (iframe as any).style = {}
-    iframe.style.display = 'none'
-
-    document.documentElement.appendChild(iframe)
-
-    globalObject = iframe.contentWindow
-  }
-
-  // Otherwise, target the current global scope
-  if (!globalObject) {
-    globalObject = (new Function('return this'))() // Access the global object in strict mode
-  }
-
-  initGlobalScope(globalObject)
-
-  return globalObject
-}
-
-function initGlobalScope (globalObject: any) {
-  // Deep-freeze all built-ins so no memory-leaking references may be left behind by a script
-  for (let name of BuiltIns) {
-    freeze(globalObject[name])
-  }
-}
-
-export function freeze (object: any): any {
-  if (object === global) new TypeError('Cannot freeze the global scope')
-  if (object == null || Object.isFrozen(object)) return object
-
-  let properties = Object.getOwnPropertyNames(object)
-
-  // A frozen property in the prototype chain will prevent a property of the same name on an inheriting object from being set (e.g., `toString`) so circumvent this
-  for (let name of properties) {
-    let descriptor = Object.getOwnPropertyDescriptor(object, name)
-    if (descriptor.writable && descriptor.configurable) {
-      Object.defineProperty(object, name, {
-        get () {
-          return descriptor.value
-        },
-        set (value) {
-          if (this === object) return object
-
-          // Defines a property on the inheritor, preventing the frozen parent from being set
-          Object.defineProperty(this, name, { value, writable: true, configurable: true, enumerable: descriptor.enumerable })
-        },
-        enumerable: descriptor.enumerable,
-      })
-    }
-  }
-
-  // Shallow freeze object
-  Object.freeze(object)
-
-  // Drop out as soon as any non-standard behavior is observed
-  if (!Object.isFrozen(object)) {
-    throw new ReferenceError('Unexpected built-in')
-  }
-
-  // Recurse to parent
-  freeze(Object.getPrototypeOf(object))
-
-  // Freeze properties
-  for (let name of properties) {
-    // As a getter might be triggered which in fact does throw an error in certain contexts, errors have to be catched
-    let value
-    try { value = object[name] }
-    catch (error) { continue }
-    freeze(value)
-  }
-
-  return object
 }

@@ -27,7 +27,7 @@ export function isReservedWord (keyword: string): boolean {
   return (ReservedWords[keyword] = false)
 }
 
-export default function escape (code: string) {
+export function normalize (code: string) {
   // Strip comments but maintain line breaks in order to preserve line numbers
   code = code.replace(new RegExp(Comment, 'g'), (match: string) => match.replace(/[^\n]+/g, ''))
 
@@ -52,4 +52,25 @@ export default function escape (code: string) {
     (match: string, character: string) => '\\u' + (character > '\u00ff' ? '' : '0') + (character > '\u0fff' ? '' : '0') + character.charCodeAt(0).toString(16))
 
   return code
+}
+
+export default class Syntax {
+  private value: string
+
+  constructor(code: string | Syntax, options?: any) {
+    if (code instanceof Syntax) this.value = code.value
+    else this.value = normalize(code)
+  }
+
+  toString () {
+    return this.value
+  }
+
+  replace (pattern: string | RegExp, replacement: string | ((substring: string, ...args: string[]) => string)) {
+    this.value = this.value.replace(pattern as any, replacement as any)
+  }
+
+  match (pattern: string | RegExp): RegExpMatchArray {
+    return this.value.match(pattern as any)
+  }
 }
