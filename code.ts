@@ -48,9 +48,6 @@ export default class Code extends Syntax {
 
     // Insert a time() instruction inside the condition statement of a while structure
     this.replace(/\bwhile\s*\(/g, '$&internal.time() && ')
-
-    // Insert a time() instruction inside the catch block of a try-catch structure
-    this.replace(/\bcatch\s*\(\s*([\s\S]*?)\s*\)\s*\{\s*/g, '$&internal.time($1); ')
   }
 
   private addGlobal () {

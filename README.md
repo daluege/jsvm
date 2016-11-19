@@ -1,8 +1,8 @@
 # jsvm
 
 [![NPM](https://img.shields.io/npm/v/jsvm.svg?maxAge=2592000&style=flat-square)](https://www.npmjs.com/package/jsvm)
-[![Dependencies](https://img.shields.io/david/daluege/jsvm.svg?maxAge=2592000&style=flat-square)](https://david-dm.org/daluege/jsvm)
-[![Build status](https://img.shields.io/travis/daluege/jsvm/master.svg?style=flat-square)](https://travis-ci.org/daluege/jsvm)
+[![Dependencies](https://img.shields.io/david/checle/jsvm.svg?maxAge=2592000&style=flat-square)](https://david-dm.org/checle/jsvm)
+[![Build status](https://img.shields.io/travis/checle/jsvm/master.svg?style=flat-square)](https://travis-ci.org/checle/jsvm)
 [![Coding style](https://img.shields.io/badge/code%20style-standard-blue.svg?style=flat-square)](http://standardjs.com/)
 
 `jsvm` is a secure and fully compatible implementation of the [Node.js VM API](https://nodejs.org/api/vm.html) in pure ECMAScript 5. It has a footprint of 7KB, does not depend on browser technologies such as the DOM. While `jsvm` can be used excellently as a [webpack shim](https://webpack.github.io/docs/configuration.html#resolve-alias) for `vm`, you just could use it instead of `vm` in Node.js, too.

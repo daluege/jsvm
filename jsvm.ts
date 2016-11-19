@@ -3,7 +3,7 @@ import {createGlobalObject, isBuiltIn} from './object'
 import {isReservedWord} from './syntax'
 
 const CONTEXT = Symbol('context')
-const TIME_INTERRUPT = 10000
+const TIMER_INTERRUPT = 10000
 
 let globalObject = null
 
@@ -22,7 +22,7 @@ function createTimer (timeout: number) {
         }, 0)
       return true
     }
-    if (steps++ < TIME_INTERRUPT) return true
+    if (steps++ < TIMER_INTERRUPT) return true
     if (Date.now() - start < timeout) return true
 
     throw new Error('Script execution timed out')
