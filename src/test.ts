@@ -1,5 +1,5 @@
 import * as test from 'tape'
 
-test('checle-js-boilerplate', (t) => {
+test('checle-ts-boilerplate', (t) => {
   t.end()
 })

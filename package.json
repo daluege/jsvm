@@ -1,5 +1,5 @@
 {
-  "name": "checle-js-boilerplate",
+  "name": "checle-ts-boilerplate",
   "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
@@ -11,23 +11,23 @@
     "build": "tsc",
     "dist": "npm run build && webpack --optimize-minimize dist/index.js dist/browser.js",
     "clean": "rm -rf dist",
-    "deploy": "npm run dist && gh-pages -d dist -m \"Deploy $(npm view checle-js-boilerplate version)\" || true",
+    "deploy": "npm run dist && gh-pages -d dist -m \"Deploy $(npm view checle-ts-boilerplate version)\" || true",
     "debug": "devtool test/index.js"
   },
   "bin": {
-    "checle-js-boilerplate": "bin/index.js"
+    "checle-ts-boilerplate": "bin/index.js"
   },
   "typings": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/checle/checle-js-boilerplate.git"
+    "url": "git+https://github.com/checle/checle-ts-boilerplate.git"
   },
   "author": "Filip Dalüge <daluege@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/checle/checle-js-boilerplate/issues"
+    "url": "https://github.com/checle/checle-ts-boilerplate/issues"
   },
-  "homepage": "https://github.com/checle/checle-js-boilerplate",
+  "homepage": "https://github.com/checle/checle-ts-boilerplate",
   "devDependencies": {
     "devtool": "^2.0.3",
     "gh-pages": "^0.11.0",
