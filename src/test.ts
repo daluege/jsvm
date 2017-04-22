@@ -1,5 +1,5 @@
-import * as test from 'tape'
+import test from 'ava'
 
-test('checle-ts-boilerplate', (t) => {
-  t.end()
+test('checle-ts-boilerplate', t => {
+  t.pass()
 })

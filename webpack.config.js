@@ -1,6 +1,0 @@
-module.exports = {
-  resolve: {
-    alias: {
-    }
-  }
-};
