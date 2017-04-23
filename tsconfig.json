@@ -6,9 +6,11 @@
     "declaration": true,
     "experimentalDecorators": true,
     "noImplicitAny": false,
-    "sourceMap": true
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src"
   },
-  "exclude": [
-    "node_modules"
+  "include": [
+    "src/**/*"
   ]
 }

@@ -1,6 +1,6 @@
 import * as test from 'tape'
 
-import * as vm from '../jsvm'
+import * as vm from '../vm'
 
 test('basic', (t) => {
   t.test('runInNewContext()', (t) => {

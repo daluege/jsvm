@@ -1,6 +1,6 @@
 import Syntax from './syntax'
 import {isReservedWord} from './syntax'
-import {Context} from './jsvm'
+import {Context} from './vm'
 
 const INTERNAL = '\\u17a3'
 

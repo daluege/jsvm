@@ -1,6 +1,6 @@
 import * as test from 'tape'
 
-import * as vm from '../jsvm'
+import * as vm from '../vm'
 
 test('timeout', (t) => {
   t.test('infinite loops', (t) => {

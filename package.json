@@ -2,17 +2,16 @@
   "name": "jsvm",
   "version": "0.9.3",
   "description": "Pure ECMAScript 5 implementation of the Node.js VM API",
-  "main": "jsvm.js",
-  "browser": "jsvm.min.js",
+  "main": "dist/index.js",
   "scripts": {
-    "prepublish": "npm run clean && typings install && npm run dist",
-    "test": "npm run build && node node_modules/tape/bin/tape test/*.js",
-    "lint": "tslint *.ts",
-    "build": "tsc",
-    "dist": "npm run build && webpack jsvm.js jsvm.min.js && babili -s --no-comments --compact true jsvm.min.js -o jsvm.min.js",
+    "prepublish": "npm run clean && npm run build",
+    "test": "tsc && tape dist/**/test/*.js dist/**/test.js",
+    "lint": "tslint src/**/*.ts",
+    "build": "rollup -c",
+    "dist": "npm run build",
     "clean": "rm -rf dist"
   },
-  "typings": "jsvm.d.ts",
+  "typings": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/daluege/jsvm.git"
@@ -24,14 +23,19 @@
   },
   "homepage": "https://github.com/daluege/jsvm",
   "devDependencies": {
-    "babili": "0.0.7",
-    "tape": "^4.6.0",
+    "@types/node": "^7.0.13",
+    "devtool": "^2.0.3",
+    "gh-pages": "^0.11.0",
+    "rollup": "^0.41.6",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-node-globals": "^1.1.0",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-typescript": "^0.8.1",
+    "rollup-watch": "^3.2.2",
+    "tape": "^4.6.3",
     "tslint": "^3.15.1",
     "tslint-config-standard": "^1.5.0",
-    "typescript": "^2.0.6",
-    "typings": "^1.3.2",
-    "webpack": "^1.13.3"
+    "typescript": "^2.2.2"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
